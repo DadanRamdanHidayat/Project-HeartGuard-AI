@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HeartGuard AI – Data Insight Dashboard</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MDI -->
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            primary: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8' },
+          },
+          backgroundImage: {
+            'blue-gradient': 'linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)',
+            'soft-gradient': 'linear-gradient(135deg, #eff6ff 0%, #fff 60%, #f0f9ff 100%)',
+          },
+          boxShadow: {
+            'card': '0 2px 16px rgba(37,99,235,0.07)',
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .text-gradient {
+      background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .card-hover { transition: transform .25s, box-shadow .25s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(37,99,235,0.13); }
+
+    /* Ping dot */
+    .ping-dot { position: relative; width: 8px; height: 8px; flex-shrink: 0; }
+    .ping-dot::before { content:''; position:absolute; inset:0; border-radius:50%; background:#2563eb; animation: pulseRing 1.5s ease-in-out infinite; }
+    .ping-dot::after  { content:''; position:absolute; inset:0; border-radius:50%; background:#2563eb; }
+    @keyframes pulseRing { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(2);opacity:0} }
+
+    nav.scrolled { box-shadow: 0 2px 20px rgba(37,99,235,0.1); }
+    .btn-ripple { position: relative; overflow: hidden; }
+    .btn-ripple .ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,.35); transform:scale(0); animation:rippleAnim .5s linear; pointer-events:none; }
+    @keyframes rippleAnim { to { transform:scale(4); opacity:0; } }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+
+<!-- NAVBAR -->
+<nav id="navbar" class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-blue-100 transition-shadow duration-300">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+    <a href="home.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-blue-gradient flex items-center justify-center shadow-md">
+        <i class="mdi mdi-heart text-white text-lg"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-extrabold text-gray-900 text-sm leading-none">HeartGuard <span class="text-gradient">AI</span></div>
+        <div class="text-[10px] font-semibold text-gray-400 tracking-widest uppercase">Deep Learning Screening</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-1">
+      <a href="home.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Beranda</a>
+      <a href="insight.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-primary-600 bg-blue-50">Data Insight</a>
+      <a href="prediction.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Prediksi</a>
+      <a href="about.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Tentang</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="#" class="btn-ripple hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-gradient text-white text-sm font-bold shadow-[0_4px_20px_rgba(37,99,235,.35)] hover:-translate-y-0.5 transition-all">
+        <i class="mdi mdi-play-circle text-base"></i> Mulai Prediksi
+      </a>
+      <button id="menu-btn" class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600">
+        <i class="mdi mdi-menu text-xl"></i>
+      </button>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden border-t border-blue-50 bg-white px-6 py-3 flex flex-col gap-1">
+    <a href="home.html" class="py-2 text-sm font-medium text-gray-500">Beranda</a>
+    <a href="insight.html" class="py-2 text-sm font-semibold text-primary-600">Data Insight</a>
+    <a href="prediction.html" class="py-2 text-sm font-medium text-gray-500">Prediksi</a>
+    <a href="about.html" class="py-2 text-sm font-medium text-gray-500">Tentang</a>
+    <a href="prediction.html" class="mt-2 py-2.5 text-center rounded-xl bg-blue-gradient text-white text-sm font-bold">Mulai Prediksi</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="max-w-7xl mx-auto px-6 py-12">
+
+  <!-- Header -->
+  <div class="max-w-3xl mb-12 reveal">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-primary-600 text-xs font-bold mb-4">
+      <i class="mdi mdi-database text-sm"></i> EXPLORATORY DATA ANALYSIS
+    </div>
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-4">
+      Data <span class="text-gradient">Insight</span> Dashboard
+    </h1>
+    <p class="text-lg text-gray-500 leading-relaxed">
+      Visualisasi hasil analisis dataset penyakit jantung yang digunakan untuk melatih model MLP.
+      Dataset berisi 303 sampel pasien dengan 13 fitur klinis.
+    </p>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    <div class="card-hover p-5 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.05s">
+      <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary-600 flex items-center justify-center mb-3">
+        <i class="mdi mdi-account-group text-xl"></i>
+      </div>
+      <div class="text-2xl font-bold">303</div>
+      <div class="text-xs text-gray-400 mt-0.5">Total Sampel</div>
+    </div>
+    <div class="card-hover p-5 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.1s">
+      <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+        <i class="mdi mdi-pulse text-xl"></i>
+      </div>
+      <div class="text-2xl font-bold">13</div>
+      <div class="text-xs text-gray-400 mt-0.5">Fitur Klinis</div>
+    </div>
+    <div class="card-hover p-5 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.15s">
+      <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary-600 flex items-center justify-center mb-3">
+        <i class="mdi mdi-trending-up text-xl"></i>
+      </div>
+      <div class="text-2xl font-bold">92.4%</div>
+      <div class="text-xs text-gray-400 mt-0.5">Akurasi Model</div>
+    </div>
+    <div class="card-hover p-5 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.2s">
+      <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center mb-3">
+        <i class="mdi mdi-alert-triangle text-xl"></i>
+      </div>
+      <div class="text-2xl font-bold">45.9%</div>
+      <div class="text-xs text-gray-400 mt-0.5">Rasio Berisiko</div>
+    </div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+
+    <!-- Age distribution -->
+    <div class="card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.05s">
+      <div class="mb-4">
+        <h3 class="font-bold text-gray-800">Distribusi Risiko per Kelompok Usia</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Berisiko vs Sehat berdasarkan rentang usia</p>
+      </div>
+      <canvas id="chartAge" height="220"></canvas>
+    </div>
+
+    <!-- Sex distribution donut -->
+    <div class="card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.1s">
+      <div class="mb-4">
+        <h3 class="font-bold text-gray-800">Distribusi berdasarkan Jenis Kelamin</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Pria menunjukkan rasio risiko lebih tinggi</p>
+      </div>
+      <canvas id="chartSex" height="220"></canvas>
+    </div>
+
+    <!-- Chest pain type -->
+    <div class="card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.15s">
+      <div class="mb-4">
+        <h3 class="font-bold text-gray-800">Risiko menurut Chest Pain Type</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Asymptomatic memiliki korelasi tertinggi</p>
+      </div>
+      <canvas id="chartCp" height="220"></canvas>
+    </div>
+
+    <!-- Radar -->
+    <div class="card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.2s">
+      <div class="mb-4">
+        <h3 class="font-bold text-gray-800">Profil Risiko Multidimensi</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Kontribusi rata-rata tiap faktor pada kasus positif</p>
+      </div>
+      <canvas id="chartRadar" height="220"></canvas>
+    </div>
+
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="grid lg:grid-cols-3 gap-6 mb-10">
+
+    <!-- Feature importance (2/3) -->
+    <div class="lg:col-span-2 card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.05s">
+      <div class="mb-4">
+        <h3 class="font-bold text-gray-800">Feature Importance — Faktor Risiko Terbesar</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Berdasarkan gradient importance dari MLP</p>
+      </div>
+      <canvas id="chartFeature" height="260"></canvas>
+    </div>
+
+    <!-- Training history (1/3) -->
+    <div class="card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.1s">
+      <div class="mb-4">
+        <h3 class="font-bold text-gray-800">Training History MLP</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Akurasi &amp; Loss per Epoch</p>
+      </div>
+      <canvas id="chartTraining" height="260"></canvas>
+    </div>
+
+  </div>
+
+  <!-- Key Insights -->
+  <div class="rounded-3xl bg-soft-gradient border border-blue-100 p-8 md:p-10 reveal">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded-xl bg-blue-gradient flex items-center justify-center shadow-[0_4px_16px_rgba(37,99,235,.3)]">
+        <i class="mdi mdi-heart text-white text-lg"></i>
+      </div>
+      <h2 class="text-2xl font-bold">Key Insights dari Analisis</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
+        <h3 class="font-semibold mb-1.5 flex items-center gap-2">
+          <i class="mdi mdi-account-clock text-primary-500"></i> Usia 50-59 tahun paling berisiko
+        </h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Kelompok ini menunjukkan rasio kasus positif tertinggi (57.5%).</p>
+      </div>
+      <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
+        <h3 class="font-semibold mb-1.5 flex items-center gap-2">
+          <i class="mdi mdi-gender-male text-primary-500"></i> Pria 2x lebih berisiko
+        </h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Rasio pria berisiko vs sehat adalah 1.24, sedangkan wanita hanya 0.35.</p>
+      </div>
+      <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
+        <h3 class="font-semibold mb-1.5 flex items-center gap-2">
+          <i class="mdi mdi-alert-circle text-amber-500"></i> Asymptomatic Chest Pain berbahaya
+        </h3>
+        <p class="text-sm text-gray-400 leading-relaxed">88% pasien dengan tipe ini terdiagnosis penyakit jantung.</p>
+      </div>
+      <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
+        <h3 class="font-semibold mb-1.5 flex items-center gap-2">
+          <i class="mdi mdi-heart-pulse text-primary-500"></i> Max Heart Rate adalah prediktor kuat
+        </h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Penurunan kapasitas detak jantung maksimum mengindikasikan risiko.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-50 border-t border-gray-200 mt-16">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div>
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-gradient flex items-center justify-center shadow-md">
+            <i class="mdi mdi-heart text-white text-lg"></i>
+          </div>
+          <span class="font-extrabold text-gray-900 text-lg">HeartGuard <span class="text-gradient">AI</span></span>
+        </div>
+        <p class="text-sm text-gray-500 leading-relaxed max-w-xs">Sistem skrining awal risiko penyakit jantung berbasis Deep Learning. Bukan pengganti diagnosis medis profesional.</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-800 mb-4">Navigasi</h4>
+        <ul class="space-y-2.5">
+          <li><a href="home.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Beranda</a></li>
+          <li><a href="prediction.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Data Insight</a></li>
+          <li><a href="prediction.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Prediksi</a></li>
+          <li><a href="about.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Tentang</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-800 mb-4">Kontak</h4>
+        <ul class="space-y-3">
+          <li><a href="#" class="flex items-center gap-2.5 text-sm text-gray-500 hover:text-primary-600 transition-colors"><i class="mdi mdi-github text-lg text-gray-400"></i> GitHub Repo</a></li>
+          <li><a href="mailto:heartguard@ai.id" class="flex items-center gap-2.5 text-sm text-gray-500 hover:text-primary-600 transition-colors"><i class="mdi mdi-email-outline text-lg text-gray-400"></i> heartguard@ai.id</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-gray-200">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-xs text-gray-400">© 2026 HeartGuard AI. Tema: Healthy Lives &amp; Well-being.</p>
+      <p class="text-xs text-amber-600 flex items-center gap-1.5"><i class="mdi mdi-alert text-amber-500 text-sm"></i><em>Hasil prediksi hanya bersifat skrining awal, bukan diagnosis medis.</em></p>
+    </div>
+  </div>
+</footer>
+
+<!-- JAVASCRIPT -->
+<script>
+// ── Navbar scroll
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 10));
+
+// ── Mobile menu
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+menuBtn.addEventListener('click', () => {
+  const hidden = mobileMenu.classList.toggle('hidden');
+  menuBtn.querySelector('i').className = hidden ? 'mdi mdi-menu text-xl' : 'mdi mdi-close text-xl';
+});
+
+// ── Scroll reveal
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+// ── Ripple
+document.querySelectorAll('.btn-ripple').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    const rect = this.getBoundingClientRect(), size = Math.max(rect.width, rect.height);
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+    this.appendChild(r);
+    r.addEventListener('animationend', () => r.remove());
+  });
+});
+
+// ── Chart.js defaults
+Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#94a3b8';
+
+const BLUE   = '#2563eb';
+const SKY    = '#0ea5e9';
+const RED    = '#ef4444';
+const AMBER  = '#f59e0b';
+const GREEN  = '#22c55e';
+const PURPLE = '#a855f7';
+const GRID   = 'rgba(226,232,240,0.7)';
+
+const tooltip = {
+  backgroundColor: '#fff',
+  titleColor: '#1e293b',
+  bodyColor: '#64748b',
+  borderColor: '#e2e8f0',
+  borderWidth: 1,
+  padding: 12,
+  cornerRadius: 12,
+  boxPadding: 4,
+};
+
+// 1. Age distribution grouped bar
+new Chart(document.getElementById('chartAge'), {
+  type: 'bar',
+  data: {
+    labels: ['29-39', '40-49', '50-59', '60-69', '70+'],
+    datasets: [
+      { label: 'Berisiko', data: [12, 28, 65, 48, 12], backgroundColor: RED,  borderRadius: 6 },
+      { label: 'Sehat',    data: [38, 52, 48, 22,  6], backgroundColor: BLUE, borderRadius: 6 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { position: 'bottom' }, tooltip },
+    scales: {
+      x: { grid: { color: GRID } },
+      y: { grid: { color: GRID }, beginAtZero: true },
+    }
+  }
+});
+
+// 2. Sex donut
+new Chart(document.getElementById('chartSex'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Pria – Berisiko', 'Pria – Sehat', 'Wanita – Berisiko', 'Wanita – Sehat'],
+    datasets: [{
+      data: [114, 92, 25, 72],
+      backgroundColor: [RED, BLUE, AMBER, GREEN],
+      borderWidth: 2, borderColor: '#fff',
+      hoverOffset: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    cutout: '62%',
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } }, tooltip },
+  }
+});
+
+// 3. Chest pain horizontal bar
+new Chart(document.getElementById('chartCp'), {
+  type: 'bar',
+  data: {
+    labels: ['Typical Angina', 'Atypical Angina', 'Non-Anginal', 'Asymptomatic'],
+    datasets: [{
+      label: 'Tingkat Risiko (%)',
+      data: [78, 42, 35, 88],
+      backgroundColor: [SKY, SKY, SKY, RED],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false }, tooltip },
+    scales: {
+      x: { grid: { color: GRID }, max: 100, beginAtZero: true },
+      y: { grid: { display: false } },
+    }
+  }
+});
+
+// 4. Radar
+new Chart(document.getElementById('chartRadar'), {
+  type: 'radar',
+  data: {
+    labels: ['Usia', 'Tekanan Darah', 'Kolesterol', 'Detak Jantung', 'Gula Darah', 'Aktivitas'],
+    datasets: [{
+      label: 'Risiko',
+      data: [78, 65, 72, 58, 45, 68],
+      backgroundColor: 'rgba(37,99,235,0.15)',
+      borderColor: BLUE,
+      borderWidth: 2,
+      pointBackgroundColor: BLUE,
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false }, tooltip },
+    scales: {
+      r: {
+        beginAtZero: true, max: 100,
+        grid: { color: GRID },
+        pointLabels: { color: '#64748b', font: { size: 11 } },
+        ticks: { display: false },
+      }
+    }
+  }
+});
+
+// 5. Feature importance horizontal bar
+new Chart(document.getElementById('chartFeature'), {
+  type: 'bar',
+  data: {
+    labels: ['Chest Pain Type','Max Heart Rate','ST Depression','Exercise Angina','Cholesterol','Blood Pressure','Age','Fasting Sugar'],
+    datasets: [{
+      label: 'Importance Score',
+      data: [92, 85, 81, 76, 68, 64, 60, 42],
+      backgroundColor: (ctx) => {
+        const grad = ctx.chart.ctx.createLinearGradient(0, 0, ctx.chart.width, 0);
+        grad.addColorStop(0, BLUE); grad.addColorStop(1, SKY);
+        return grad;
+      },
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false }, tooltip },
+    scales: {
+      x: { grid: { color: GRID }, max: 100, beginAtZero: true },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+    }
+  }
+});
+
+// 6. Training history line
+new Chart(document.getElementById('chartTraining'), {
+  type: 'line',
+  data: {
+    labels: [1, 5, 10, 15, 20, 25, 30],
+    datasets: [
+      {
+        label: 'Accuracy',
+        data: [0.62, 0.74, 0.81, 0.86, 0.89, 0.91, 0.92],
+        borderColor: GREEN, backgroundColor: 'rgba(34,197,94,.1)',
+        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: GREEN, tension: 0.4, fill: true,
+      },
+      {
+        label: 'Loss',
+        data: [0.68, 0.52, 0.41, 0.34, 0.28, 0.24, 0.21],
+        borderColor: RED, backgroundColor: 'rgba(239,68,68,.08)',
+        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: RED, tension: 0.4, fill: true,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } }, tooltip },
+    scales: {
+      x: { grid: { color: GRID }, title: { display: true, text: 'Epoch', color: '#94a3b8' } },
+      y: { grid: { color: GRID }, beginAtZero: true },
+    }
+  }
+});
+</script>
+</body>
+</html>

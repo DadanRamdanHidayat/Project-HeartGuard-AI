@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HeartGuard AI – Deteksi Dini Penyakit Jantung</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Material Design Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            primary: { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 400:'#60a5fa', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8' },
+            accent: '#0ea5e9',
+          },
+          backgroundImage: {
+            'hero-gradient': 'linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 40%, #e8f0fe 100%)',
+            'blue-gradient': 'linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)',
+            'soft-gradient': 'linear-gradient(135deg, #eff6ff 0%, #fff 60%, #f0f9ff 100%)',
+          },
+          boxShadow: {
+            'card': '0 2px 16px rgba(37,99,235,0.07)',
+            'card-hover': '0 8px 32px rgba(37,99,235,0.15)',
+            'btn': '0 4px 20px rgba(37,99,235,0.35)',
+            'btn-hover': '0 8px 28px rgba(37,99,235,0.45)',
+          },
+          animation: {
+            'float': 'float 4s ease-in-out infinite',
+            'fade-up': 'fadeUp 0.7s ease both',
+            'fade-up-2': 'fadeUp 0.7s 0.15s ease both',
+            'fade-up-3': 'fadeUp 0.7s 0.3s ease both',
+            'ecg': 'ecg 2s linear infinite',
+          },
+          keyframes: {
+            float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-14px)' } },
+            fadeUp: { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+            ecg: { '0%': { left: '-60%' }, '100%': { left: '100%' } },
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .text-gradient {
+      background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Ping dot */
+    .ping-dot { position: relative; width: 8px; height: 8px; flex-shrink: 0; }
+    .ping-dot::before {
+      content: ''; position: absolute; inset: 0; border-radius: 50%; background: #2563eb;
+      animation: pulseRing 1.5s ease-in-out infinite;
+    }
+    .ping-dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #2563eb; }
+    @keyframes pulseRing { 0%,100% { transform: scale(1); opacity: .7; } 50% { transform: scale(2); opacity: 0; } }
+
+    /* ECG line */
+    .ecg-track { position: relative; width: 75%; height: 3px; background: rgba(37,99,235,.12); border-radius: 2px; overflow: visible; }
+    .ecg-track::after {
+      content: ''; position: absolute; left: -60%; top: -7px;
+      width: 60%; height: 18px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20'%3E%3Cpolyline points='0,10 20,10 30,2 40,18 50,10 60,10 70,0 75,20 80,10 120,10' stroke='%232563eb' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat;
+      background-size: 100% 100%;
+      animation: ecg 2s linear infinite;
+    }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Card hover */
+    .card-hover { transition: transform .25s ease, box-shadow .25s ease; }
+    .card-hover:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(37,99,235,0.14); }
+
+    /* Stat icon hover */
+    .stat-card:hover .stat-icon { background: linear-gradient(135deg, #2563eb, #0ea5e9); color: white; }
+    .stat-icon { transition: background .25s, color .25s; }
+
+    /* Ripple */
+    .btn-ripple { position: relative; overflow: hidden; }
+    .btn-ripple .ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,.35); transform: scale(0); animation: rippleAnim .5s linear; pointer-events: none; }
+    @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+    nav.scrolled { box-shadow: 0 2px 20px rgba(37,99,235,0.1); }
+  </style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+<!-- NAVBAR -->
+<nav id="navbar" class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-blue-100 transition-shadow duration-300">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-blue-gradient flex items-center justify-center shadow-md">
+        <i class="mdi mdi-heart text-white text-lg"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-extrabold text-gray-900 text-sm leading-none">HeartGuard <span class="text-gradient">AI</span></div>
+        <div class="text-[10px] font-semibold text-gray-400 tracking-widest uppercase">Deep Learning Screening</div>
+      </div>
+    </a>
+
+    <div class="hidden md:flex items-center gap-1">
+      <a href="home.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-primary-600 bg-blue-50">Beranda</a>
+      <a href="insight.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Data Insight</a>
+      <a href="prediction.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Prediksi</a>
+      <a href="about.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Tentang</a>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="prediction.html" class="btn-ripple hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-gradient text-white text-sm font-bold shadow-btn hover:shadow-btn-hover hover:-translate-y-0.5 transition-all">
+        <i class="mdi mdi-play-circle text-base"></i>
+        Mulai Prediksi
+      </a>
+      <button id="menu-btn" class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600">
+        <i class="mdi mdi-menu text-xl"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="hidden md:hidden border-t border-blue-50 bg-white px-6 py-3 flex flex-col gap-1">
+    <a href="home.html" class="py-2 text-sm font-semibold text-primary-600">Beranda</a>
+    <a href="insight.html" class="py-2 text-sm font-medium text-gray-500">Data Insight</a>
+    <a href="prediction.html" class="py-2 text-sm font-medium text-gray-500">Prediksi</a>
+    <a href="about.html" class="py-2 text-sm font-medium text-gray-500">Tentang</a>
+    <a href="prediction.html" class="mt-2 py-2.5 text-center rounded-xl bg-blue-gradient text-white text-sm font-bold">Mulai Prediksi</a>
+  </div>
+</nav>
+
+
+<!-- HERO -->
+<section class="bg-hero-gradient overflow-hidden relative">
+  <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl pointer-events-none"></div>
+  <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-sky-100/50 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-6 py-20 md:py-28 relative">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+      <div class="animate-fade-up">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 mb-6">
+          <div class="ping-dot"></div>
+          <span class="text-xs font-bold text-primary-600 uppercase tracking-wider">AI Health Screening</span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.1] mb-6 text-gray-900">
+          Deteksi Dini Risiko<br/>
+          <span class="text-gradient">Penyakit Jantung</span><br/>
+          dengan Kecerdasan Buatan
+        </h1>
+
+        <p class="text-lg text-gray-500 mb-8 leading-relaxed max-w-lg">
+          HeartGuard AI menggunakan model <strong class="text-gray-800 font-semibold">Deep Learning (MLP)</strong> untuk menganalisis data kesehatan Anda dan memberikan prediksi risiko kardiovaskular secara cepat dan akurat.
+        </p>
+
+        <div class="flex flex-wrap gap-3 mb-8 animate-fade-up-2">
+          <a href="#" class="btn-ripple inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-gradient text-white font-bold shadow-btn hover:shadow-btn-hover hover:-translate-y-0.5 transition-all">
+            Mulai Cek Risiko
+            <i class="mdi mdi-arrow-right text-lg"></i>
+          </a>
+          <a href="#" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold hover:border-blue-300 hover:text-primary-600 hover:bg-blue-50 transition-all">
+            <i class="mdi mdi-chart-bar text-lg"></i>
+            Lihat Data Insight
+          </a>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-400 animate-fade-up-3">
+          <span class="flex items-center gap-1.5"><i class="mdi mdi-check-circle text-emerald-500 text-base"></i> Gratis</span>
+          <span class="flex items-center gap-1.5"><i class="mdi mdi-shield-check text-emerald-500 text-base"></i> Privasi terjaga</span>
+          <span class="flex items-center gap-1.5"><i class="mdi mdi-lightning-bolt text-emerald-500 text-base"></i> Hasil &lt; 5 detik</span>
+        </div>
+      </div>
+
+      <!-- Hero image -->
+      <div class="relative animate-float">
+        <div class="absolute -inset-6 bg-gradient-to-br from-blue-200/30 to-sky-200/30 rounded-full blur-3xl"></div>
+        <img
+          src="hero-heart.jpg"
+          alt="Visualisasi jantung 3D dengan AI heartbeat"
+          class="relative rounded-2xl shadow-2xl w-full h-auto"
+        />
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- STATS -->
+<section class="py-20">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-12 reveal">
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-3">Mengapa Penting?</h2>
+      <p class="text-gray-500 max-w-xl mx-auto">Penyakit jantung adalah penyebab kematian nomor satu di dunia. Deteksi dini menyelamatkan nyawa.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+      <div class="stat-card card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.05s">
+        <div class="stat-icon w-12 h-12 rounded-xl bg-blue-50 text-primary-500 flex items-center justify-center mb-4">
+          <i class="mdi mdi-chart-line text-2xl"></i>
+        </div>
+        <div class="text-3xl font-extrabold text-gradient mb-1" data-count="17.9" data-suffix=" Juta">17.9 Juta</div>
+        <p class="text-sm text-gray-400 leading-snug">Kematian per tahun akibat penyakit kardiovaskular</p>
+      </div>
+
+      <div class="stat-card card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.1s">
+        <div class="stat-icon w-12 h-12 rounded-xl bg-blue-50 text-primary-500 flex items-center justify-center mb-4">
+          <i class="mdi mdi-trending-up text-2xl"></i>
+        </div>
+        <div class="text-3xl font-extrabold text-gradient mb-1" data-count="32" data-suffix="%">32%</div>
+        <p class="text-sm text-gray-400 leading-snug">Dari total kematian global (WHO)</p>
+      </div>
+
+      <div class="stat-card card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.15s">
+        <div class="stat-icon w-12 h-12 rounded-xl bg-blue-50 text-primary-500 flex items-center justify-center mb-4">
+          <i class="mdi mdi-shield-check text-2xl"></i>
+        </div>
+        <div class="text-3xl font-extrabold text-gradient mb-1" data-count="80" data-suffix="%">80%</div>
+        <p class="text-sm text-gray-400 leading-snug">Dapat dicegah dengan deteksi dini</p>
+      </div>
+
+      <div class="stat-card card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.2s">
+        <div class="stat-icon w-12 h-12 rounded-xl bg-blue-50 text-primary-500 flex items-center justify-center mb-4">
+          <i class="mdi mdi-account-group text-2xl"></i>
+        </div>
+        <div class="text-3xl font-extrabold text-gradient mb-1">1 dari 4</div>
+        <p class="text-sm text-gray-400 leading-snug">Orang dewasa berisiko</p>
+      </div>
+
+    </div>
+    <p class="text-center text-xs text-gray-300 mt-5 italic">Sumber: World Health Organization (WHO)</p>
+  </div>
+</section>
+
+
+<!-- FEATURES -->
+<section class="py-20 bg-gray-50/60">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-12 reveal">
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-3">
+        Bagaimana <span class="text-gradient">HeartGuard AI</span> Bekerja?
+      </h2>
+      <p class="text-gray-500 max-w-xl mx-auto">Tiga pilar utama yang membuat sistem ini cepat, akurat, dan bermanfaat.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <div class="card-hover p-8 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.05s">
+        <div class="w-14 h-14 rounded-2xl bg-blue-gradient flex items-center justify-center shadow-btn mb-5">
+          <i class="mdi mdi-brain text-3xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Deep Learning MLP</h3>
+        <p class="text-gray-400 leading-relaxed text-sm">Model Multi-Layer Perceptron yang dilatih pada dataset klinis untuk memprediksi risiko secara akurat.</p>
+      </div>
+
+      <div class="card-hover p-8 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.1s">
+        <div class="w-14 h-14 rounded-2xl bg-blue-gradient flex items-center justify-center shadow-btn mb-5">
+          <i class="mdi mdi-pulse text-3xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Analisis Real-time</h3>
+        <p class="text-gray-400 leading-relaxed text-sm">Hasil prediksi instan berdasarkan parameter kesehatan seperti tekanan darah, kolesterol, dan detak jantung.</p>
+      </div>
+
+      <div class="card-hover p-8 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.15s">
+        <div class="w-14 h-14 rounded-2xl bg-blue-gradient flex items-center justify-center shadow-btn mb-5">
+          <i class="mdi mdi-stethoscope text-3xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Skrining Awal</h3>
+        <p class="text-gray-400 leading-relaxed text-sm">Tingkatkan kesadaran kesehatan jantung Anda dengan rekomendasi pencegahan yang dipersonalisasi.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- RISK FACTORS -->
+<section class="py-20">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="rounded-3xl bg-soft-gradient border border-blue-100 p-10 md:p-14 reveal">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+        <div>
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-bold text-primary-600 uppercase tracking-wider mb-4">
+            <i class="mdi mdi-alert-circle text-sm"></i> Faktor Risiko
+          </span>
+          <h2 class="text-3xl md:text-4xl font-extrabold mb-4">Kenali Faktor Risiko</h2>
+          <p class="text-gray-500 mb-7 leading-relaxed">
+            Beberapa faktor utama yang berkontribusi terhadap penyakit jantung. HeartGuard AI menganalisis kombinasi faktor-faktor ini untuk memberikan prediksi yang komprehensif.
+          </p>
+          <a href="#" class="btn-ripple inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-gradient text-white font-bold shadow-btn hover:shadow-btn-hover hover:-translate-y-0.5 transition-all">
+            <i class="mdi mdi-heart text-lg"></i>
+            Cek Risiko Saya Sekarang
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-water text-primary-500 text-lg"></i><span class="text-sm font-semibold">Hipertensi</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-oil text-primary-500 text-lg"></i><span class="text-sm font-semibold">Kolesterol Tinggi</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-needle text-primary-500 text-lg"></i><span class="text-sm font-semibold">Diabetes</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-scale-bathroom text-primary-500 text-lg"></i><span class="text-sm font-semibold">Obesitas</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-smoking text-primary-500 text-lg"></i><span class="text-sm font-semibold">Merokok</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-run text-primary-500 text-lg"></i><span class="text-sm font-semibold">Kurang Aktivitas</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-emoticon-sad text-primary-500 text-lg"></i><span class="text-sm font-semibold">Stres</span>
+          </div>
+          <div class="risk-tag flex items-center gap-2.5 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-card transition-all cursor-default">
+            <i class="mdi mdi-dna text-primary-500 text-lg"></i><span class="text-sm font-semibold">Faktor Genetik</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- CTA BANNER -->
+<section class="py-16 bg-blue-gradient">
+  <div class="max-w-4xl mx-auto px-6 text-center reveal">
+    <div class="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6">
+      <i class="mdi mdi-heart-pulse text-4xl text-white"></i>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Mulai Deteksi Sekarang</h2>
+    <p class="text-blue-100 mb-8 max-w-lg mx-auto">Jangan tunda kesehatan jantung Anda. Dapatkan prediksi risiko dalam hitungan detik, gratis dan terjaga privasinya.</p>
+    <a href="#" class="btn-ripple inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-primary-600 font-extrabold shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all">
+      <i class="mdi mdi-play-circle text-xl"></i>
+      Mulai Cek Risiko – Gratis
+    </a>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer class="bg-gray-50 border-t border-gray-200">
+  <!-- Main footer -->
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+      <!-- Brand col -->
+      <div>
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-gradient flex items-center justify-center shadow-md">
+            <i class="mdi mdi-heart text-white text-lg"></i>
+          </div>
+          <span class="font-extrabold text-gray-900 text-lg">HeartGuard <span class="text-gradient">AI</span></span>
+        </div>
+        <p class="text-sm text-gray-500 leading-relaxed max-w-xs">
+          Sistem skrining awal risiko penyakit jantung berbasis Deep Learning. Bukan pengganti diagnosis medis profesional.
+        </p>
+      </div>
+
+      <!-- Navigasi col -->
+      <div>
+        <h4 class="font-bold text-gray-800 mb-4">Navigasi</h4>
+        <ul class="space-y-2.5">
+          <li><a href="#" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Beranda</a></li>
+          <li><a href="#" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Data Insight</a></li>
+          <li><a href="#" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Prediksi</a></li>
+          <li><a href="#" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Tentang</a></li>
+        </ul>
+      </div>
+
+      <!-- Kontak col -->
+      <div>
+        <h4 class="font-bold text-gray-800 mb-4">Kontak</h4>
+        <ul class="space-y-3">
+          <li>
+            <a href="#" class="flex items-center gap-2.5 text-sm text-gray-500 hover:text-primary-600 transition-colors">
+              <i class="mdi mdi-github text-lg text-gray-400"></i>
+              GitHub Repo
+            </a>
+          </li>
+          <li>
+            <a href="mailto:heartguard@ai.id" class="flex items-center gap-2.5 text-sm text-gray-500 hover:text-primary-600 transition-colors">
+              <i class="mdi mdi-email-outline text-lg text-gray-400"></i>
+              heartguard@ai.id
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="border-t border-gray-200 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-xs text-gray-400">© 2026 HeartGuard AI. Tema: Healthy Lives &amp; Well-being.</p>
+      <p class="text-xs text-amber-600 flex items-center gap-1.5">
+        <i class="mdi mdi-alert text-amber-500 text-sm"></i>
+        <em>Hasil prediksi hanya bersifat skrining awal, bukan diagnosis medis.</em>
+      </p>
+    </div>
+  </div>
+</footer>
+
+
+<!-- JAVASCRIPT -->
+<script>
+  // Sticky nav shadow
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  // Mobile menu toggle
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  menuBtn.addEventListener('click', () => {
+    const isHidden = mobileMenu.classList.toggle('hidden');
+    const icon = menuBtn.querySelector('i');
+    icon.className = isHidden ? 'mdi mdi-menu text-xl' : 'mdi mdi-close text-xl';
+  });
+
+  // Scroll reveal (IntersectionObserver)
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  // Ripple effect
+  document.querySelectorAll('.btn-ripple').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const rect = this.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
+      this.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    });
+  });
+
+  // Counter animation for stat numbers
+  function animateCounter(el, target, suffix, isDecimal) {
+    const duration = 1600;
+    const start = performance.now();
+    const step = (ts) => {
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = target * eased;
+      el.textContent = (isDecimal ? value.toFixed(1) : Math.round(value)) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target.querySelector('[data-count]');
+        if (el && !el.dataset.animated) {
+          el.dataset.animated = 'true';
+          const target = parseFloat(el.dataset.count);
+          const suffix = el.dataset.suffix || '';
+          const isDecimal = el.dataset.count.includes('.');
+          animateCounter(el, target, suffix, isDecimal);
+        }
+        counterObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.stat-card').forEach(el => counterObserver.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HeartGuard AI – Prediksi Risiko Jantung</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          backgroundImage: {
+            'blue-gradient': 'linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)',
+            'soft-gradient': 'linear-gradient(135deg, #eff6ff 0%, #fff 60%, #f0f9ff 100%)',
+          },
+          boxShadow: {
+            'card': '0 2px 16px rgba(37,99,235,0.07)',
+            'elegant': '0 8px 32px rgba(37,99,235,0.13)',
+            'btn': '0 4px 20px rgba(37,99,235,0.35)',
+          },
+          keyframes: {
+            fadeUp: { from:{opacity:'0',transform:'translateY(20px)'}, to:{opacity:'1',transform:'translateY(0)'} },
+            spin: { to:{transform:'rotate(360deg)'} },
+            pulse: { '0%,100%':{opacity:1},'50%':{opacity:.5} },
+          },
+          animation: {
+            'fade-up': 'fadeUp .6s ease both',
+            'spin-slow': 'spin 1s linear infinite',
+            'pulse-slow': 'pulse 1.5s ease-in-out infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .text-gradient { background: linear-gradient(135deg,#2563eb,#0ea5e9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* Ping dot */
+    .ping-dot{position:relative;width:8px;height:8px;flex-shrink:0}
+    .ping-dot::before{content:'';position:absolute;inset:0;border-radius:50%;background:#2563eb;animation:pulseRing 1.5s ease-in-out infinite}
+    .ping-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:#2563eb}
+    @keyframes pulseRing{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(2);opacity:0}}
+
+    nav.scrolled { box-shadow: 0 2px 20px rgba(37,99,235,.1); }
+
+    /* Form field */
+    .field-input {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: 1.5px solid #e2e8f0; background: #fff;
+      font-size: .9rem; font-family: inherit; color: #1e293b;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .field-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .field-input.error { border-color: #ef4444; }
+
+    /* Progress ring animation */
+    #risk-circle { transition: stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1); }
+
+    /* Ripple */
+    .btn-ripple{position:relative;overflow:hidden}
+    .btn-ripple .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);transform:scale(0);animation:rippleAnim .5s linear;pointer-events:none}
+    @keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+    /* Toast */
+    #toast { transition: opacity .3s, transform .3s; }
+    #toast.show { opacity: 1!important; transform: translateY(0)!important; }
+
+    .reveal { opacity:0; transform:translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+
+<!-- NAVBAR -->
+<nav id="navbar" class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-blue-100 transition-shadow duration-300">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+    <a href="home.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-blue-gradient flex items-center justify-center shadow-md">
+        <i class="mdi mdi-heart text-white text-lg"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-extrabold text-gray-900 text-sm leading-none">HeartGuard <span class="text-gradient">AI</span></div>
+        <div class="text-[10px] font-semibold text-gray-400 tracking-widest uppercase">Deep Learning Screening</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-1">
+      <a href="home.html"    class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Beranda</a>
+      <a href="insight.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Data Insight</a>
+      <a href="#"            class="px-4 py-2 rounded-lg text-sm font-semibold text-blue-600 bg-blue-50">Prediksi</a>
+      <a href="#"            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all">Tentang</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="#" class="btn-ripple hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-gradient text-white text-sm font-bold shadow-btn hover:-translate-y-0.5 transition-all">
+        <i class="mdi mdi-play-circle text-base"></i> Mulai Prediksi
+      </a>
+      <button id="menu-btn" class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600">
+        <i class="mdi mdi-menu text-xl"></i>
+      </button>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden border-t border-blue-50 bg-white px-6 py-3 flex flex-col gap-1">
+    <a href="home.html" class="py-2 text-sm font-medium text-gray-500">Beranda</a>
+    <a href="insight.html" class="py-2 text-sm font-medium text-gray-500">Data Insight</a>
+    <a href="prediction.html" class="py-2 text-sm font-semibold text-blue-600">Prediksi</a>
+    <a href="about.html" class="py-2 text-sm font-medium text-gray-500">Tentang</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="max-w-7xl mx-auto px-6 py-12">
+
+  <!-- Header -->
+  <div class="max-w-3xl mb-10 animate-fade-up">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-bold mb-4">
+      <i class="mdi mdi-creation text-sm"></i> AI PREDICTION ENGINE
+    </div>
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-4">
+      Prediksi <span class="text-gradient">Risiko Jantung</span>
+    </h1>
+    <p class="text-lg text-gray-500 leading-relaxed">
+      Masukkan data kesehatan Anda untuk mendapatkan estimasi risiko penyakit jantung berdasarkan model Multi-Layer Perceptron (MLP).
+    </p>
+  </div>
+
+  <div class="grid lg:grid-cols-5 gap-6">
+
+    <!-- FORM (3/5) -->
+    <div class="lg:col-span-3 p-6 md:p-8 rounded-2xl bg-white border border-gray-100 shadow-card">
+      <h2 class="text-xl font-bold mb-1">Data Kesehatan Pasien</h2>
+      <p class="text-sm text-gray-400 mb-6">Semua field wajib diisi.</p>
+
+      <div class="grid sm:grid-cols-2 gap-5">
+
+        <!-- Age -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Usia (Age) <span class="font-normal text-gray-400">(tahun)</span></label>
+          <input id="f-age" type="number" value="45" min="1" max="120" class="field-input" placeholder="cth: 45" />
+        </div>
+
+        <!-- Sex -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Jenis Kelamin (Sex)</label>
+          <select id="f-sex" class="field-input">
+            <option value="male">Pria</option>
+            <option value="female">Wanita</option>
+          </select>
+        </div>
+
+        <!-- Chest Pain -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Chest Pain Type (cp)</label>
+          <select id="f-cp" class="field-input">
+            <option value="0">0 — Typical Angina</option>
+            <option value="1">1 — Atypical Angina</option>
+            <option value="2">2 — Non-Anginal Pain</option>
+            <option value="3">3 — Asymptomatic</option>
+          </select>
+        </div>
+
+        <!-- Blood pressure -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Tekanan Darah (trestbps) <span class="font-normal text-gray-400">(mm Hg)</span></label>
+          <input id="f-trestbps" type="number" value="130" min="60" max="250" class="field-input" placeholder="cth: 130" />
+        </div>
+
+        <!-- Cholesterol -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Kolesterol (chol) <span class="font-normal text-gray-400">(mg/dl)</span></label>
+          <input id="f-chol" type="number" value="220" min="50" max="700" class="field-input" placeholder="cth: 220" />
+        </div>
+
+        <!-- Fasting blood sugar -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Gula Darah Puasa (fbs) <span class="font-normal text-gray-400">(&gt;120 mg/dl?)</span></label>
+          <select id="f-fbs" class="field-input">
+            <option value="0">Tidak</option>
+            <option value="1">Ya</option>
+          </select>
+        </div>
+
+        <!-- RestECG -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Resting ECG (restecg)</label>
+          <select id="f-restecg" class="field-input">
+            <option value="0">0 — Normal</option>
+            <option value="1">1 — ST-T Abnormal</option>
+            <option value="2">2 — LV Hypertrophy</option>
+          </select>
+        </div>
+
+        <!-- Max heart rate -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Detak Jantung Max (thalach) <span class="font-normal text-gray-400">(bpm)</span></label>
+          <input id="f-thalach" type="number" value="150" min="40" max="250" class="field-input" placeholder="cth: 150" />
+        </div>
+
+        <!-- Exang -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">Exercise Induced Angina (exang)</label>
+          <select id="f-exang" class="field-input">
+            <option value="0">Tidak</option>
+            <option value="1">Ya</option>
+          </select>
+        </div>
+
+        <!-- ST Depression -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold text-gray-700">ST Depression (oldpeak) <span class="font-normal text-gray-400">(0.0 – 6.0)</span></label>
+          <input id="f-oldpeak" type="number" step="0.1" value="1.0" min="0" max="10" class="field-input" placeholder="cth: 1.0" />
+        </div>
+
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3 mt-8">
+        <button id="btn-predict" onclick="handlePredict()" class="btn-ripple flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-gradient text-white font-bold shadow-btn hover:-translate-y-0.5 transition-all">
+          <i class="mdi mdi-creation text-lg"></i>
+          <span id="btn-label">Prediksi Sekarang</span>
+        </button>
+        <button onclick="handleReset()" class="flex items-center gap-2 px-5 py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+          <i class="mdi mdi-refresh text-lg"></i> Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULT (2/5) -->
+    <div class="lg:col-span-2 space-y-4">
+
+      <!-- Result panel -->
+      <div id="result-panel" class="p-8 rounded-2xl bg-white border-2 border-dashed border-gray-200 shadow-card text-center">
+        <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
+          <i class="mdi mdi-heart text-3xl text-blue-500"></i>
+        </div>
+        <h3 class="font-bold mb-1">Hasil Prediksi</h3>
+        <p class="text-sm text-gray-400">Isi formulir lalu klik <strong>Prediksi Sekarang</strong> untuk melihat hasil.</p>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="p-5 rounded-2xl bg-amber-50 border border-amber-200">
+        <div class="flex gap-3">
+          <i class="mdi mdi-information text-xl text-amber-500 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <h4 class="font-bold text-sm mb-1 text-amber-800">Disclaimer Medis</h4>
+            <p class="text-xs text-amber-700 leading-relaxed">
+              Hasil ini hanya alat skrining awal berbasis AI dan <strong>bukan diagnosis medis</strong>.
+              Selalu konsultasikan kondisi Anda dengan tenaga medis profesional.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-50 border-t border-gray-200 mt-16">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div>
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-gradient flex items-center justify-center shadow-md">
+            <i class="mdi mdi-heart text-white text-lg"></i>
+          </div>
+          <span class="font-extrabold text-gray-900 text-lg">HeartGuard <span class="text-gradient">AI</span></span>
+        </div>
+        <p class="text-sm text-gray-500 leading-relaxed max-w-xs">Sistem skrining awal risiko penyakit jantung berbasis Deep Learning. Bukan pengganti diagnosis medis profesional.</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-800 mb-4">Navigasi</h4>
+        <ul class="space-y-2.5">
+          <li><a href="home.html" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">Beranda</a></li>
+          <li><a href="insight.html" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">Data Insight</a></li>
+          <li><a href="prediction.html" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">Prediksi</a></li>
+          <li><a href="about.html" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">Tentang</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-800 mb-4">Kontak</h4>
+        <ul class="space-y-3">
+          <li><a href="#" class="flex items-center gap-2.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"><i class="mdi mdi-github text-lg text-gray-400"></i> GitHub Repo</a></li>
+          <li><a href="mailto:heartguard@ai.id" class="flex items-center gap-2.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"><i class="mdi mdi-email-outline text-lg text-gray-400"></i> heartguard@ai.id</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-gray-200">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-xs text-gray-400">© 2026 HeartGuard AI. Tema: Healthy Lives &amp; Well-being.</p>
+      <p class="text-xs text-amber-600 flex items-center gap-1.5"><i class="mdi mdi-alert text-amber-500 text-sm"></i><em>Hasil prediksi hanya bersifat skrining awal, bukan diagnosis medis.</em></p>
+    </div>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-elegant bg-white border border-gray-200 opacity-0 translate-y-4 pointer-events-none transition-all duration-300">
+  <i id="toast-icon" class="mdi text-xl"></i>
+  <div>
+    <div id="toast-title" class="text-sm font-bold text-gray-800"></div>
+    <div id="toast-desc"  class="text-xs text-gray-500"></div>
+  </div>
+</div>
+
+<script>
+// ── Navbar scroll
+window.addEventListener('scroll', () =>
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10));
+
+// ── Mobile menu
+document.getElementById('menu-btn').addEventListener('click', () => {
+  const m = document.getElementById('mobile-menu');
+  const hidden = m.classList.toggle('hidden');
+  document.getElementById('menu-btn').querySelector('i').className =
+    hidden ? 'mdi mdi-menu text-xl' : 'mdi mdi-close text-xl';
+});
+
+// ── Ripple
+document.querySelectorAll('.btn-ripple').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    const rect = this.getBoundingClientRect(), size = Math.max(rect.width, rect.height);
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+    this.appendChild(r);
+    r.addEventListener('animationend', () => r.remove());
+  });
+});
+
+// ── Toast helper
+function showToast(type, title, desc) {
+  const el = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-desc').textContent  = desc;
+  if (type === 'success') { icon.className = 'mdi mdi-check-circle text-xl text-emerald-500'; }
+  else                    { icon.className = 'mdi mdi-alert-circle text-xl text-red-500'; }
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ── Heuristic MLP prediction
+function predictRisk(d) {
+  let score = 0;
+  const contributors = [];
+
+  const ageImp = Math.max(0, (d.age - 40) * 0.018);
+  score += ageImp;
+  if (ageImp > 0.05) contributors.push({ factor: 'Usia', impact: ageImp });
+
+  if (d.sex === 'male') { score += 0.12; contributors.push({ factor: 'Jenis Kelamin (Pria)', impact: 0.12 }); }
+
+  const cpMap = [0.05, 0.18, 0.22, 0.45];
+  const cpImp = cpMap[d.cp];
+  score += cpImp;
+  if (cpImp > 0.1) contributors.push({ factor: 'Chest Pain Type', impact: cpImp });
+
+  const bpImp = Math.max(0, (d.trestbps - 120) * 0.005);
+  score += bpImp;
+  if (bpImp > 0.05) contributors.push({ factor: 'Tekanan Darah Tinggi', impact: bpImp });
+
+  const cholImp = Math.max(0, (d.chol - 200) * 0.0015);
+  score += cholImp;
+  if (cholImp > 0.05) contributors.push({ factor: 'Kolesterol Tinggi', impact: cholImp });
+
+  if (d.fbs === 1) { score += 0.08; contributors.push({ factor: 'Gula Darah Puasa Tinggi', impact: 0.08 }); }
+  if (d.restecg > 0) { score += 0.07; contributors.push({ factor: 'ECG Abnormal', impact: 0.07 }); }
+
+  const expectedMax = 220 - d.age;
+  const hrDeficit = Math.max(0, (expectedMax - d.thalach) / expectedMax);
+  const hrImp = hrDeficit * 0.35;
+  score += hrImp;
+  if (hrImp > 0.05) contributors.push({ factor: 'Detak Jantung Maksimum Rendah', impact: hrImp });
+
+  if (d.exang === 1) { score += 0.18; contributors.push({ factor: 'Exercise Induced Angina', impact: 0.18 }); }
+
+  const stImp = d.oldpeak * 0.08;
+  score += stImp;
+  if (stImp > 0.1) contributors.push({ factor: 'ST Depression (Oldpeak)', impact: stImp });
+
+  const probability = 1 / (1 + Math.exp(-(score - 0.6) * 3));
+  const level = probability < 0.35 ? 'low' : probability < 0.65 ? 'moderate' : 'high';
+
+  return {
+    probability,
+    level,
+    contributors: contributors.sort((a,b) => b.impact - a.impact).slice(0, 4),
+  };
+}
+
+// ── Validate
+function getFormData() {
+  const age      = parseFloat(document.getElementById('f-age').value);
+  const sex      = document.getElementById('f-sex').value;
+  const cp       = parseInt(document.getElementById('f-cp').value);
+  const trestbps = parseFloat(document.getElementById('f-trestbps').value);
+  const chol     = parseFloat(document.getElementById('f-chol').value);
+  const fbs      = parseInt(document.getElementById('f-fbs').value);
+  const restecg  = parseInt(document.getElementById('f-restecg').value);
+  const thalach  = parseFloat(document.getElementById('f-thalach').value);
+  const exang    = parseInt(document.getElementById('f-exang').value);
+  const oldpeak  = parseFloat(document.getElementById('f-oldpeak').value);
+
+  const errors = [];
+  if (isNaN(age) || age < 1 || age > 120) errors.push('Usia harus antara 1–120');
+  if (isNaN(trestbps) || trestbps < 60 || trestbps > 250) errors.push('Tekanan darah harus 60–250');
+  if (isNaN(chol) || chol < 50 || chol > 700) errors.push('Kolesterol harus 50–700');
+  if (isNaN(thalach) || thalach < 40 || thalach > 250) errors.push('Detak jantung max harus 40–250');
+  if (isNaN(oldpeak) || oldpeak < 0 || oldpeak > 10) errors.push('ST Depression harus 0–10');
+
+  if (errors.length) return { error: errors[0] };
+  return { data: { age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak } };
+}
+
+// ── Render loading state
+function renderLoading() {
+  document.getElementById('result-panel').innerHTML = `
+    <div class="text-center py-4">
+      <div class="w-16 h-16 rounded-full bg-blue-gradient flex items-center justify-center mx-auto mb-4 animate-pulse-slow shadow-btn">
+        <i class="mdi mdi-pulse text-3xl text-white animate-spin-slow"></i>
+      </div>
+      <p class="font-semibold text-gray-800">Model MLP sedang memproses...</p>
+      <p class="text-xs text-gray-400 mt-1">Forward pass melalui hidden layers</p>
+    </div>
+  `;
+}
+
+// ── Render result
+function renderResult(result) {
+  const pct = Math.round(result.probability * 100);
+  const circumference = 2 * Math.PI * 68; // r=68
+  const offset = circumference * (1 - result.probability);
+
+  const cfg = {
+    low:      { label:'Risiko Rendah',  icon:'mdi-check-circle',   ringColor:'#22c55e', badgeCls:'bg-emerald-50 text-emerald-600 border-emerald-200', barCls:'text-emerald-500', msg:'Kondisi Anda relatif baik. Pertahankan gaya hidup sehat!' },
+    moderate: { label:'Risiko Sedang',  icon:'mdi-alert',           ringColor:'#f59e0b', badgeCls:'bg-amber-50 text-amber-600 border-amber-200',       barCls:'text-amber-500',   msg:'Ada beberapa faktor risiko. Konsultasikan dengan dokter.' },
+    high:     { label:'Risiko Tinggi',  icon:'mdi-alert-circle',    ringColor:'#ef4444', badgeCls:'bg-red-50 text-red-600 border-red-200',             barCls:'text-red-500',     msg:'Segera lakukan pemeriksaan medis lebih lanjut.' },
+  }[result.level];
+
+  const recoLow = `
+    <li class="flex items-start gap-2"><i class="mdi mdi-check-circle text-emerald-500 mt-0.5 flex-shrink-0"></i><span class="text-sm text-gray-700">Pertahankan pola makan seimbang &amp; olahraga teratur</span></li>
+    <li class="flex items-start gap-2"><i class="mdi mdi-check-circle text-emerald-500 mt-0.5 flex-shrink-0"></i><span class="text-sm text-gray-700">Cek kesehatan rutin minimal 1x setahun</span></li>`;
+  const recoHigh = `
+    <li class="flex items-start gap-2"><i class="mdi mdi-check-circle text-emerald-500 mt-0.5 flex-shrink-0"></i><span class="text-sm text-gray-700">Konsultasi dengan dokter spesialis jantung</span></li>
+    <li class="flex items-start gap-2"><i class="mdi mdi-check-circle text-emerald-500 mt-0.5 flex-shrink-0"></i><span class="text-sm text-gray-700">Kurangi makanan tinggi lemak jenuh &amp; garam</span></li>
+    <li class="flex items-start gap-2"><i class="mdi mdi-check-circle text-emerald-500 mt-0.5 flex-shrink-0"></i><span class="text-sm text-gray-700">Rutin olahraga aerobik ringan (jalan kaki 30 menit/hari)</span></li>
+    <li class="flex items-start gap-2"><i class="mdi mdi-check-circle text-emerald-500 mt-0.5 flex-shrink-0"></i><span class="text-sm text-gray-700">Kelola stres dan berhenti merokok</span></li>`;
+
+  const contributorsHtml = result.contributors.length ? `
+    <div class="mt-5">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Faktor Kontributor Utama</h4>
+      <div class="space-y-2">
+        ${result.contributors.map(c => `
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+            <span class="text-sm font-medium text-gray-700">${c.factor}</span>
+            <span class="text-xs font-bold ${cfg.barCls}">+${Math.round(c.impact * 100)}%</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  document.getElementById('result-panel').className = 'p-6 rounded-2xl bg-white border border-gray-100 shadow-elegant animate-fade-up';
+  document.getElementById('result-panel').innerHTML = `
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold mb-4 ${cfg.badgeCls}">
+      <i class="mdi ${cfg.icon} text-sm"></i> ${cfg.label.toUpperCase()}
+    </div>
+
+    <!-- Ring -->
+    <div class="flex justify-center mb-4">
+      <div class="relative w-40 h-40">
+        <svg class="w-40 h-40 -rotate-90" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="68" stroke="#e2e8f0" stroke-width="12" fill="none"/>
+          <circle id="risk-circle" cx="80" cy="80" r="68"
+            stroke="${cfg.ringColor}" stroke-width="12" fill="none"
+            stroke-dasharray="${circumference}"
+            stroke-dashoffset="${circumference}"
+            stroke-linecap="round"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-4xl font-extrabold text-gray-900">${pct}<span class="text-lg">%</span></span>
+          <span class="text-xs text-gray-400">probabilitas</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-sm text-center text-gray-500 mb-4">${cfg.msg}</p>
+
+    ${contributorsHtml}
+
+    <div class="mt-5 pt-5 border-t border-gray-100">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Rekomendasi Awal</h4>
+      <ul class="space-y-2">
+        ${result.level === 'low' ? recoLow : recoHigh}
+      </ul>
+    </div>
+  `;
+
+  // Animate ring
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const circle = document.getElementById('risk-circle');
+      if (circle) circle.style.strokeDashoffset = offset;
+    });
+  });
+}
+
+// ── Handle predict
+function handlePredict() {
+  const { data, error } = getFormData();
+  if (error) {
+    showToast('error', 'Data tidak valid', error);
+    return;
+  }
+
+  const btn = document.getElementById('btn-predict');
+  btn.disabled = true;
+  document.getElementById('btn-label').textContent = 'Menganalisis...';
+
+  renderLoading();
+
+  setTimeout(() => {
+    const result = predictRisk(data);
+    renderResult(result);
+    btn.disabled = false;
+    document.getElementById('btn-label').textContent = 'Prediksi Sekarang';
+    showToast('success', 'Prediksi selesai', 'Hasil ditampilkan di samping.');
+  }, 1200);
+}
+
+// ── Handle reset
+function handleReset() {
+  document.getElementById('f-age').value      = '45';
+  document.getElementById('f-sex').value      = 'male';
+  document.getElementById('f-cp').value       = '0';
+  document.getElementById('f-trestbps').value = '130';
+  document.getElementById('f-chol').value     = '220';
+  document.getElementById('f-fbs').value      = '0';
+  document.getElementById('f-restecg').value  = '0';
+  document.getElementById('f-thalach').value  = '150';
+  document.getElementById('f-exang').value    = '0';
+  document.getElementById('f-oldpeak').value  = '1.0';
+
+  document.getElementById('result-panel').className = 'p-8 rounded-2xl bg-white border-2 border-dashed border-gray-200 shadow-card text-center';
+  document.getElementById('result-panel').innerHTML = `
+    <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
+      <i class="mdi mdi-heart text-3xl text-blue-500"></i>
+    </div>
+    <h3 class="font-bold mb-1">Hasil Prediksi</h3>
+    <p class="text-sm text-gray-400">Isi formulir lalu klik <strong>Prediksi Sekarang</strong> untuk melihat hasil.</p>
+  `;
+}
+
+// ── Scroll reveal
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+</script>
+</body>
+</html>
