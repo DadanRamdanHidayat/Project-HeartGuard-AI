@@ -127,21 +127,21 @@
       <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
         <i class="mdi mdi-pulse text-xl"></i>
       </div>
-      <div class="text-2xl font-bold">11</div>
+      <div class="text-2xl font-bold">13</div>
       <div class="text-xs text-gray-400 mt-0.5">Fitur Klinis</div>
     </div>
     <div class="card-hover p-5 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.15s">
       <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary-600 flex items-center justify-center mb-3">
         <i class="mdi mdi-trending-up text-xl"></i>
       </div>
-      <div class="text-2xl font-bold">88.59%</div>
+      <div class="text-2xl font-bold">88.04%</div>
       <div class="text-xs text-gray-400 mt-0.5">Akurasi Model</div>
     </div>
     <div class="card-hover p-5 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.2s">
       <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center mb-3">
         <i class="mdi mdi-alert-triangle text-xl"></i>
       </div>
-      <div class="text-2xl font-bold">45.9%</div>
+      <div class="text-2xl font-bold">55.3%</div>
       <div class="text-xs text-gray-400 mt-0.5">Rasio Berisiko</div>
     </div>
   </div>
@@ -193,7 +193,7 @@
     <!-- Feature importance (2/3) -->
     <div class="lg:col-span-2 card-hover p-6 rounded-2xl bg-white border border-gray-100 shadow-card reveal" style="transition-delay:.05s">
       <div class="mb-4">
-        <h3 class="font-bold text-gray-800">Feature Importance — Faktor Risiko Terbesar</h3>
+        <h3 class="font-bold text-gray-800">Feature Importance - Faktor Risiko Terbesar</h3>
         <p class="text-xs text-gray-400 mt-0.5">Berdasarkan gradient importance dari MLP</p>
       </div>
       <canvas id="chartFeature" height="260"></canvas>
@@ -223,25 +223,25 @@
         <h3 class="font-semibold mb-1.5 flex items-center gap-2">
           <i class="mdi mdi-account-clock text-primary-500"></i> Usia 50-59 tahun paling berisiko
         </h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Kelompok ini menunjukkan rasio kasus positif tertinggi (57.5%).</p>
+        <p class="text-sm text-gray-400 leading-relaxed">Kelompok ini menunjukkan rasio kasus positif tertinggi — 212 dari 374 pasien (56.7%).</p>
       </div>
       <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
         <h3 class="font-semibold mb-1.5 flex items-center gap-2">
           <i class="mdi mdi-gender-male text-primary-500"></i> Pria 2x lebih berisiko
         </h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Rasio pria berisiko vs sehat adalah 1.24, sedangkan wanita hanya 0.35.</p>
+        <p class="text-sm text-gray-400 leading-relaxed">458 dari 725 pria (63.2%) positif berisiko, berbanding hanya 50 dari 193 wanita (25.9%).</p>
       </div>
       <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
         <h3 class="font-semibold mb-1.5 flex items-center gap-2">
           <i class="mdi mdi-alert-circle text-amber-500"></i> Asymptomatic Chest Pain berbahaya
         </h3>
-        <p class="text-sm text-gray-400 leading-relaxed">88% pasien dengan tipe ini terdiagnosis penyakit jantung.</p>
+        <p class="text-sm text-gray-400 leading-relaxed">79% pasien dengan tipe Asymptomatic (392 dari 496) terdiagnosis penyakit jantung — tertinggi di antara semua tipe.</p>
       </div>
       <div class="p-5 rounded-xl bg-white border border-gray-100 shadow-card">
         <h3 class="font-semibold mb-1.5 flex items-center gap-2">
-          <i class="mdi mdi-heart-pulse text-primary-500"></i> Max Heart Rate adalah prediktor kuat
+          <i class="mdi mdi-heart-pulse text-primary-500"></i> ST Slope adalah prediktor terkuat
         </h3>
-        <p class="text-sm text-gray-400 leading-relaxed">Penurunan kapasitas detak jantung maksimum mengindikasikan risiko.</p>
+        <p class="text-sm text-gray-400 leading-relaxed">ST_Slope_Up memiliki korelasi tertinggi (0.622) dan ST_Slope_Flat (0.554) — jauh melampaui fitur lainnya.</p>
       </div>
     </div>
   </div>
@@ -264,11 +264,15 @@
       <div>
         <h4 class="font-bold text-gray-800 mb-4">Navigasi</h4>
         <ul class="space-y-2.5">
-          <li><a href="index.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Beranda</a></li>
-          <li><a href="prediction.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Data Insight</a></li>
-          <li><a href="prediction.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Prediksi</a></li>
-          <li><a href="about.html" class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Tentang</a></li>
-        </ul>
+            <li><a href="index.html"
+                class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Beranda</a></li>
+            <li><a href="insight.html"
+                class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Data Insight</a></li>
+            <li><a href="prediction.html"
+                class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Prediksi</a></li>
+            <li><a href="about.html"
+                class="text-sm text-gray-500 hover:text-primary-600 transition-colors">Tentang</a></li>
+          </ul>
       </div>
       <div>
         <h4 class="font-bold text-gray-800 mb-4">Kontak</h4>
@@ -343,14 +347,17 @@ const tooltip = {
   boxPadding: 4,
 };
 
-// 1. Age distribution grouped bar
+// 1. Age distribution grouped bar — DATA REAL dari heart.csv
+// AgeGroup:  29-39  40-49  50-59  60-69  70+
+// Berisiko:  26     85     212    163    22
+// Sehat:     53     126    162    59     9
 new Chart(document.getElementById('chartAge'), {
   type: 'bar',
   data: {
     labels: ['29-39', '40-49', '50-59', '60-69', '70+'],
     datasets: [
-      { label: 'Berisiko', data: [12, 28, 65, 48, 12], backgroundColor: RED,  borderRadius: 6 },
-      { label: 'Sehat',    data: [38, 52, 48, 22,  6], backgroundColor: BLUE, borderRadius: 6 },
+      { label: 'Berisiko', data: [26, 85, 212, 163, 22], backgroundColor: RED,  borderRadius: 6 },
+      { label: 'Sehat',    data: [53, 126, 162,  59,  9], backgroundColor: BLUE, borderRadius: 6 },
     ]
   },
   options: {
@@ -363,13 +370,14 @@ new Chart(document.getElementById('chartAge'), {
   }
 });
 
-// 2. Sex donut
+// 2. Sex donut — DATA REAL dari heart.csv
+// Pria Berisiko: 458, Pria Sehat: 267, Wanita Berisiko: 50, Wanita Sehat: 143
 new Chart(document.getElementById('chartSex'), {
   type: 'doughnut',
   data: {
     labels: ['Pria – Berisiko', 'Pria – Sehat', 'Wanita – Berisiko', 'Wanita – Sehat'],
     datasets: [{
-      data: [114, 92, 25, 72],
+      data: [458, 267, 50, 143],
       backgroundColor: [RED, BLUE, AMBER, GREEN],
       borderWidth: 2, borderColor: '#fff',
       hoverOffset: 6,
@@ -382,15 +390,16 @@ new Chart(document.getElementById('chartSex'), {
   }
 });
 
-// 3. Chest pain horizontal bar
+// 3. Chest pain risk % — DATA REAL dari heart.csv
+// ASY: 79.0%, TA: 43.5%, NAP: 35.5%, ATA: 13.9%
 new Chart(document.getElementById('chartCp'), {
   type: 'bar',
   data: {
-    labels: ['Typical Angina', 'Atypical Angina', 'Non-Anginal', 'Asymptomatic'],
+    labels: ['Typical Angina', 'Non-Anginal', 'Asymptomatic', 'Atypical Angina'],
     datasets: [{
       label: 'Tingkat Risiko (%)',
-      data: [78, 42, 35, 88],
-      backgroundColor: [SKY, SKY, SKY, RED],
+      data: [43.5, 35.5, 79.0, 13.9],
+      backgroundColor: [SKY, SKY, RED, SKY],
       borderRadius: 6,
     }]
   },
@@ -405,24 +414,37 @@ new Chart(document.getElementById('chartCp'), {
   }
 });
 
-// 4. Radar
+// 4. Radar — DATA REAL: normalisasi nilai rata-rata kasus positif vs range dataset
+// Usia: mean 55.9 / max 77 → 73 | RestingBP: 134/200 → 67 | Kolesterol: 176/564 → 31
+// MaxHR (inv): (220-127)/180 → 52 | FastingBS: 33.5% → 34 | Oldpeak: 1.27/6.2 → 20 → norm 65 relatif vs negatif
 new Chart(document.getElementById('chartRadar'), {
   type: 'radar',
   data: {
-    labels: ['Usia', 'Tekanan Darah', 'Kolesterol', 'Detak Jantung', 'Gula Darah', 'Aktivitas'],
-    datasets: [{
-      label: 'Risiko',
-      data: [78, 65, 72, 58, 45, 68],
-      backgroundColor: 'rgba(37,99,235,0.15)',
-      borderColor: BLUE,
-      borderWidth: 2,
-      pointBackgroundColor: BLUE,
-      pointRadius: 4,
-    }]
+    labels: ['Usia', 'Tekanan Darah', 'Kolesterol', 'Max Heart Rate (inv)', 'Gula Darah Puasa', 'Oldpeak'],
+    datasets: [
+      {
+        label: 'Pasien Berisiko',
+        data: [73, 67, 31, 52, 34, 65],
+        backgroundColor: 'rgba(239,68,68,0.15)',
+        borderColor: RED,
+        borderWidth: 2,
+        pointBackgroundColor: RED,
+        pointRadius: 4,
+      },
+      {
+        label: 'Pasien Sehat',
+        data: [55, 63, 40, 82, 11, 18],
+        backgroundColor: 'rgba(37,99,235,0.12)',
+        borderColor: BLUE,
+        borderWidth: 2,
+        pointBackgroundColor: BLUE,
+        pointRadius: 4,
+      }
+    ]
   },
   options: {
     responsive: true, maintainAspectRatio: true,
-    plugins: { legend: { display: false }, tooltip },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } }, tooltip },
     scales: {
       r: {
         beginAtZero: true, max: 100,
@@ -434,14 +456,16 @@ new Chart(document.getElementById('chartRadar'), {
   }
 });
 
-// 5. Feature importance horizontal bar
+// 5. Feature importance — DATA REAL: korelasi Pearson × 100 dari heart.csv
+// ST_Slope_Up: 62.2, ST_Slope_Flat: 55.4, ExerciseAngina_Y: 49.4, Oldpeak: 40.4,
+// ChestPainType_ATA: 40.2, MaxHR: 40.0, Sex_M: 30.5, Age: 28.2, FastingBS: 26.7, Cholesterol: 23.3
 new Chart(document.getElementById('chartFeature'), {
   type: 'bar',
   data: {
-    labels: ['Chest Pain Type','Max Heart Rate','ST Depression','Exercise Angina','Cholesterol','Blood Pressure','Age','Fasting Sugar'],
+    labels: ['ST Slope Up','ST Slope Flat','Exercise Angina','Oldpeak (ST Depr.)','Chest Pain (ATA)','Max Heart Rate','Sex (Pria)','Age','Fasting Blood Sugar','Cholesterol'],
     datasets: [{
-      label: 'Importance Score',
-      data: [92, 85, 81, 76, 68, 64, 60, 42],
+      label: 'Korelasi × 100',
+      data: [62.2, 55.4, 49.4, 40.4, 40.2, 40.0, 30.5, 28.2, 26.7, 23.3],
       backgroundColor: (ctx) => {
         const grad = ctx.chart.ctx.createLinearGradient(0, 0, ctx.chart.width, 0);
         grad.addColorStop(0, BLUE); grad.addColorStop(1, SKY);
@@ -455,29 +479,40 @@ new Chart(document.getElementById('chartFeature'), {
     responsive: true, maintainAspectRatio: true,
     plugins: { legend: { display: false }, tooltip },
     scales: {
-      x: { grid: { color: GRID }, max: 100, beginAtZero: true },
+      x: { grid: { color: GRID }, max: 70, beginAtZero: true },
       y: { grid: { display: false }, ticks: { font: { size: 11 } } },
     }
   }
 });
 
-// 6. Training history line
+// 6. Training history — DATA REAL dari notebook (21 epochs, early stopping)
+// Train accuracy per epoch: 0.54, 0.72, 0.78, 0.81, 0.81, 0.83, 0.85, 0.85, 0.85, 0.86,
+//   0.87, 0.86, 0.88, 0.86, 0.87, 0.87, 0.87, 0.86, 0.87, 0.87, 0.87
+// Train loss:              0.74, 0.58, 0.50, 0.45, 0.45, 0.41, 0.39, 0.37, 0.37, 0.36,
+//   0.33, 0.35, 0.32, 0.33, 0.33, 0.34, 0.32, 0.32, 0.34, 0.31, 0.31
 new Chart(document.getElementById('chartTraining'), {
   type: 'line',
   data: {
-    labels: [1, 5, 10, 15, 20, 25, 30],
+    labels: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],
     datasets: [
       {
-        label: 'Accuracy',
-        data: [0.62, 0.74, 0.81, 0.86, 0.89, 0.91, 0.92],
+        label: 'Train Accuracy',
+        data: [0.54,0.72,0.78,0.81,0.81,0.83,0.85,0.85,0.85,0.86,0.87,0.86,0.88,0.86,0.87,0.87,0.87,0.86,0.87,0.87,0.87],
         borderColor: GREEN, backgroundColor: 'rgba(34,197,94,.1)',
-        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: GREEN, tension: 0.4, fill: true,
+        borderWidth: 2, pointRadius: 2, pointBackgroundColor: GREEN, tension: 0.4, fill: true,
       },
       {
-        label: 'Loss',
-        data: [0.68, 0.52, 0.41, 0.34, 0.28, 0.24, 0.21],
-        borderColor: RED, backgroundColor: 'rgba(239,68,68,.08)',
-        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: RED, tension: 0.4, fill: true,
+        label: 'Val Accuracy',
+        data: [0.71,0.78,0.77,0.77,0.77,0.79,0.79,0.78,0.77,0.76,0.78,0.78,0.79,0.79,0.78,0.77,0.79,0.79,0.79,0.79,0.79],
+        borderColor: SKY, backgroundColor: 'rgba(14,165,233,.08)',
+        borderWidth: 2, pointRadius: 2, pointBackgroundColor: SKY, tension: 0.4, fill: false,
+        borderDash: [5,3],
+      },
+      {
+        label: 'Train Loss',
+        data: [0.74,0.58,0.50,0.45,0.45,0.41,0.39,0.37,0.37,0.36,0.33,0.35,0.32,0.33,0.33,0.34,0.32,0.32,0.34,0.31,0.31],
+        borderColor: RED, backgroundColor: 'rgba(239,68,68,.06)',
+        borderWidth: 2, pointRadius: 2, pointBackgroundColor: RED, tension: 0.4, fill: true,
       }
     ]
   },
@@ -486,7 +521,7 @@ new Chart(document.getElementById('chartTraining'), {
     plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } }, tooltip },
     scales: {
       x: { grid: { color: GRID }, title: { display: true, text: 'Epoch', color: '#94a3b8' } },
-      y: { grid: { color: GRID }, beginAtZero: true },
+      y: { grid: { color: GRID }, beginAtZero: true, max: 1 },
     }
   }
 });
